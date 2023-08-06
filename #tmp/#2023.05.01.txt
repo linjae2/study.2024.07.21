@@ -1,0 +1,1402 @@
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.250.101:6443 --token u7c3oe.ver3cl02qpb21guu \
+	--discovery-token-ca-cert-hash sha256:40fb2b678ed4f6be7f9c0e351a00809d6237e0aea396470cbfb6d61e95927791 
+
+
+
+https://nvtienanh.info/en/devops-en/install-kubernetes-cluster-on-ubuntu-22-04-20230223
+# 쿠버네티스 설치
+== 
+ >> 환경
+$> virt-install --name u.01 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.01.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.02 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.02.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.03 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.03.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+ >> 호스트 네임 변경
+$> sudo hostnamectl set-hostname u01.home.loc
+
+
+$> sudo vim /etc/hosts
+192.168.250.101 u01.home.loc u01
+192.168.250.102 u02.home.loc u02
+192.168.250.103 u03.home.loc u03
+
+ >> 스왑 off
+$> sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+
+ >> kernel 모듈
+$> sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+$> sudo modprobe overlay
+$> sudo modprobe br_netfilter
+
+$> sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+$> sudo sysctl --system
+
+
+ >> Install containerd run time
+ ================================================
+$> sudo apt install -y curl gnupg2 software-properties-common apt-transport-https ca-certificates
+$> sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/docker.gpg
+$> sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+$> sudo apt update
+$> sudo apt install -y containerd.io
+
+$> containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+$> sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+$> sudo systemctl restart containerd
+$> sudo systemctl enable containerd
+
+
+ >> Install Kubernetes
+ ================================================
+
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+
+$> sudo kubeadm init
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+sudo kubeadm join 192.168.250.101:6443 --token g4ychl.v7pec7nzyixgbuxg \
+	--discovery-token-ca-cert-hash sha256:8565f9a0a76f95e9a454263997f858d72fdfa34d88883d6276ff4e601ddde014 
+
+
+
+
+$> kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+
+
+
+
+
+
+
+
+
+$> virt-install --name t.02 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.02.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network bridge:br0,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+$> virt-install --name t.02 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.02.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=internal,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+
+
+==========================
+
+출처 : https://nvtienanh.info/en/devops-en/install-kubernetes-cluster-on-ubuntu-22-04-20230223
+==
+$> sudo tee /etc/modules-load.d/containerd.conf <<EOF
+overlay
+br_netfilter
+EOF
+$> sudo modprobe overlay
+$> sudo modprobe br_netfilter
+
+$> sudo tee /etc/sysctl.d/kubernetes.conf <<EOF
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
+EOF
+$> sudo sysctl --system
+
+$> sudo apt install -y curl gnupg2 software-properties-common apt-transport-https ca-certificates
+$> sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmour -o /etc/apt/trusted.gpg.d/docker.gpg
+$> sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+$> sudo apt update
+$> sudo apt install -y containerd.io
+
+$> containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
+$> sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+$> sudo systemctl restart containerd
+$> sudo systemctl enable containerd
+
+  Install Kubernetes
+==
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+sudo kubeadm init \
+  --pod-network-cidr=10.10.0.0/16 \
+  --control-plane-endpoint=k8s-master.nvtienanh.local
+
+$> sudo kubeadm init
+
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+kubeadm join 192.168.122.101:6443 --token ymozxw.psurybuw5utyyab4 \
+        --discovery-token-ca-cert-hash sha256:bebd08eb6120f48e079d1e46dc60da0afb14ced5c1760eebe793b93c786be041
+
+$> kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+
+$> kubeadm token generate
+$> kubeadm token create <generated-token> --print-join-command --ttl=0
+
+# cni, 클러스터관련 설정파일 삭제 
+$ sudo rm -r /etc/cni/net.d/* && sudo rm -r /etc/kubernetes/* && rm -rf $HOME/.kube/config
+
+
+2023.04.25
+================================================================================
+
+
+
+$> virt-install --name u.00 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/u.00.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.01 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.01.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+scp  "F:\Linux\ubuntu22.04.backup.qcow2" injae@192.168.2.206:/data/vm/imgs/ubuntu22.04.backup.qcow2
+scp  "G:\ubuntu-22.04.1-live-server-amd64.iso" injae@192.168.2.206:/data/iso/ubuntu-22.04.1-live-server-amd64.iso
+
+$> cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+$> sudo sysctl --system
+
+$> sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+
+$> kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+$> kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+$> kubectl apply -f https://docs.projectcalico.org/v3.14/manifests/calico.yaml
+$> kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+======================================================================================================
+
+
+
+1. master/node1/node2에서 kubeadm reset 실행 후 systemctl restart kubelet
+$ kubeadm reset 
+$ systemctl restart kubelet
+
+2. cni 관련 디렉토리 파일 삭제(마스터에서만)
+$ rm -rf /etc/cni/net.d/*
+$ rm -rf $HOME/.kube/config
+
+3. 마스터에서 kubeadm init 실행 후 cni 설치
+$ kubeadm init --apiserver-advertise-address=192.168.122.101
+$ kubectl apply -f "https://cloud.weave.works/k8x/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+
+
+
+
+
+
+
+
+
+
+
+# 호스트 이름 변경
+$>	sudo hostnamectl set-hostname [호스트이름]
+	도커 설치
+1.	Installation Methods
+# Add Docker’s official GPG key:
+==
+$> sudo install -m 0755 -d /etc/apt/keyrings
+$> curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+$> sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# Use the following command to set up the repository:
+==
+$>	echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+"$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine
+==
+$>	sudo apt-get update
+$>	sudo apt-get install docker-ce docker-ce-cli containerd.io [docker-buildx-plugin docker-compose-plugin]
+잔여 호스트 이미지, 볼륨, 컨테이너 제거
+$> sudo rm -rf /var/lib/docker
+$> sudo rm -rf /var/lib/containerd
+2.	Install using the convenience script
+Docker provides a convenience script at https://get.docker.com/ to install Docker into development environments non-interactively. The convenience script isn’t recommended for production environments, but it’s useful for creating a provisioning script tailored to your needs. Also refer to the install using the repository steps to learn about installation steps to install using the package repository. The source code for the script is open source, and you can find it in the docker-install repository on GitHub.
+
+Tip: preview script steps before funning
+You can run the script with the --dry-run option to learn what steps the script will run when invoked:
+
+출처 : Install Docker Engine on Ubuntu | Docker Documentation
+
+$>	sudo swapoff -a
+$>	sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+$>	sudo swapoff -a && sudo sed -i '/swap/s/^/#/' /etc/fstab
+
+$>	sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+
+$>	echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+$>	sudo apt-get update
+$>	sudo apt-get install -y kubelet kubeadm kubectl
+$>	sudo apt-mark hold kubelet kubeadm kubectl
+$>	systemctl start kubelet && systemctl enable kubelet
+kubelet은 이제 kebeadm이 수행할 작업을 알려 줄 때까지 크래시루프(crashloop)상태로 기다려야 하므로 몇 초마다 다시 시작된다.
+$>	kubelet –version
+$>	kubeadm version
+$>	kubectl version
+
+Kubernetes 1.22버전부터는 systemd와 cgroup 맞춰 줘야함, 마스터/노드서버 모두 아래 명령어 수행
+$>	sudo mkdir /etc/docker
+$>	cat <<EOF | sudo tee /etc/docker/daemon.json
+{
+  "exec-opts": ["native.cgroupdriver=systemd"],
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "100m"
+  },
+  "storage-driver": "overlay2"
+}
+EOF
+
+$>	sudo systemctl enable docker 
+$>	sudo systemctl daemon-reload 
+$>	sudo systemctl restart docker
+
+
+
+Control plane 컴포넌트 구성 및 네트워크 환경 구성
+$>	sudo kubeadm config images pull
+
+Master Node 구성
+$>	sudo kubeadm init
+$>	kubectl get nodes
+
+$>	kubeadm token create –ttl 0
+$>	kubeadm token list
+
+
+#>	sudo kubeadm init
+# kubeadm cannot validate component [ERROR CRI]: container runtime is not running
+$>	sudo rm /etc/containerd/config.toml
+$>	sudo systemctl restart containerd
+
+#>	sudo kubeadm init
+# could not find officially supported version of etcd for Kubernetes v1.27.1
+
+kubeadm join 192.168.122.101:6443 --token oeijk0.at6fybwy3takgets \
+        --discovery-token-ca-cert-hash sha256:33370a258331dc171f7187db2a66cb578ab26325c170d686a2292de84c36be1e
+
+Install Pod Network add-on
+$> kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+$> kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+$> kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.122.101:6443 --token o7l1o3.3xfzbiulrijy1ld4 \
+        --discovery-token-ca-cert-hash sha256:c3bb143d0eac234ba9fa0aef7f94fb4bcea1e170e158550aae383bfa417cd471
+====================================
+injae@u01:~$ kubectl get pods --all-namespaces
+NAMESPACE     NAME                          READY   STATUS             RESTARTS        AGE
+kube-system   coredns-5d78c9869d-j52dr      0/1     Pending            0               2m22s
+kube-system   coredns-5d78c9869d-sm4zk      0/1     Pending            0               2m22s
+kube-system   etcd-u01                      1/1     Running            1 (3m21s ago)   2m48s
+kube-system   kube-apiserver-u01            1/1     Running            1 (2m51s ago)   2m48s
+kube-system   kube-controller-manager-u01   0/1     CrashLoopBackOff   3 (21s ago)     2m48s
+kube-system   kube-proxy-5g77l              1/1     Running            2 (72s ago)     2m22s
+kube-system   kube-scheduler-u01            1/1     Running            2 (70s ago)     2m48s
+
+
+
+kube-apiserver 
+      --advertise-address=192.168.122.101 
+      --allow-privileged=true 
+      --authorization-mode=Node,RBAC 
+      --client-ca-file=/etc/kubernetes/pki/ca.crt 
+      --enable-admission-plugins=NodeRestriction 
+      --enable-bootstrap-token-auth=true 
+      --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt 
+      --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt 
+      --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key 
+      --etcd-servers=https://127.0.0.1:2379 
+      --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt 
+      --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key 
+      --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname 
+      --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt 
+      --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key 
+      --requestheader-allowed-names=front-proxy-client 
+      --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt 
+      --requestheader-extra-headers-prefix=X-Remote-Extra- 
+      --requestheader-group-headers=X-Remote-Group 
+      --requestheader-username-headers=X-Remote-User 
+      --secure-port=6443 
+      --service-account-issuer=https://kubernetes.default.svc.cluster.local 
+      --service-account-key-file=/etc/kubernetes/pki/sa.pub 
+      --service-account-signing-key-file=/etc/kubernetes/pki/sa.key 
+      --service-cluster-ip-range=10.96.0.0/12 
+      --tls-cert-file=/etc/kubernetes/pki/apiserver.crt 
+      --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
+
+kube-controller-manager --authentication-kubeconfig=/etc/kubernetes/controller-manager.conf --authorization-kubeconfig=/etc/kubernetes/controller-manager.conf --bind-address=127.0.0.1 --client-ca-file=/etc/kubernetes/pki/ca.crt --cluster-name=kubernetes --cluster-signing-cert-file=/etc/kubernetes/pki/ca.crt --cluster-signing-key-file=/etc/kubernetes/pki/ca.key --controllers=*,bootstrapsigner,tokencleaner --kubeconfig=/etc/kubernetes/controller-manager.conf --leader-elect=true --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt --root-ca-file=/etc/kubernetes/pki/ca.crt --service-account-private-key-file=/etc/kubernetes/pki/sa.key --use-service-account-credentials=true
+kube-scheduler --authentication-kubeconfig=/etc/kubernetes/scheduler.conf --authorization-kubeconfig=/etc/kubernetes/scheduler.conf --bind-address=127.0.0.1 --kubeconfig=/etc/kubernetes/scheduler.conf --leader-elect=true
+
+====================================
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join 192.168.2.206:6443 --token anytxs.mqsn2yat3bhfk5u1 \
+        --discovery-token-ca-cert-hash sha256:4739aaa29fef6e3fe8a3821c30c827c22e5c5941bad243ba9d2c01edb198b1fb
+
+
+
+
+scp injae@192.168.2.206:/mnt/data/vms/imgs/ubuntu22.04.backup.qcow2 "D:\.Apps\Linux\ubuntu22.04.backup.qcow2"
+scp injae@192.168.2.206:/mnt/data/vms/imgs/ubuntu22.04.desktop.backup.qcow2 "D:\.Apps\Linux\ubuntu22.04.desktop.backup.qcow2"
+
+
+$> virt-install --name u.01 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.u.01.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.02 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.u.02.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.03 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.u.03.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.04 --vcpus 4 --memory 8192 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.u.04.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+
+
+
+
+$> virt-install --name ud.22.04 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.desktop.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+
+$> virt-install --name u.22.04 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,listen=0.0.0.0
+
+
+
+
+
+
+
+
+
+$> qemu-img create -f qcow2 /mnt/data/vms/imgs/ubuntu22.04.qcow2 50G
+$> virt-install --name u.22.04 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom /mnt/data/iso/ubuntu-22.04.1-live-server-amd64.iso \
+  --network network=default,model=virtio \
+  --boot cdrom,hd \
+  --graphics spice,listen=0.0.0.0
+  
+  
+$> qemu-img create -f qcow2 /mnt/data/vms/imgs/ubuntu22.04.desktop.qcow2 50G
+$> virt-install --name ud.22.04 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/mnt/data/vms/imgs/ubuntu22.04.desktop.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom /mnt/data/iso/ubuntu-22.04.1-desktop-amd64.iso \
+  --network network=default,model=virtio \
+  --boot cdrom,hd \
+  --graphics spice,port=59101,listen=0.0.0.0
+
+
+scp "D:\.Apps\Linux\ubuntu-22.04.1-desktop-amd64.iso" injae@192.168.2.206:/mnt/data/iso/ubuntu-22.04.1-desktop-amd64.iso
+scp "D:\.Apps\Linux\ubuntu-22.04.1-live-server-amd64.iso" injae@192.168.2.206:/mnt/data/iso/ubuntu-22.04.1-live-server-amd64.iso
+
+
+
+$> virt-install --name win10 --vcpus 2 --memory 4096 \
+  --os-type windows --os-variant win10 \
+  --disk path=/mnt/data/vms/imgs/win10_64bit.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd \
+  --graphics spice,port=59001,listen=0.0.0.0
+
+$> qemu-img create -f qcow2 /mnt/data/vms/imgs/win10_64bit.qcow2 50G
+$> virt-install --name win10_64 --vcpus 2 --memory 4096 \
+  --os-type windows --os-variant win10 \
+  --disk path=/mnt/data/vms/imgs/win10_64bit.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom /mnt/data/iso/Windows.2023.03.09.iso \
+  --disk path=/mnt/data/iso/virtio-win-0.1.229.iso,device=cdrom \
+  --network network=default,model=virtio \
+  --boot cdrom,hd \
+  --graphics spice,port=5900,listen=0.0.0.0
+
+  ==>> Win10 ¼³Ä¡Áß µå¶óÀÌ¹ö °æ·Î
+  virtio-win-0.1.229.iso > viostor > win10 > amd64
+
+   ==>> ERROR unsupported configuration: Auto allocation of spice TLS port
+        requested but spice TLS is disabled in qemu.conf
+     $> vi /etc/libvirt/qemu.conf
+     spice_tls = 0
+
+  --graphics vnc,listen=0.0.0.0,port=5998
+
+
+injae@dev:/mnt/data$ sudo apt install libvirt-daemon-system
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+The following additional packages will be installed:
+  dns-root-data dnsmasq-base iptables jq libip6tc2 libjq1 libnetfilter-conntrack3 libnfnetlink0 libnftnl11 libnss-mymachines libonig5
+  libtpms0 libvirt-daemon-config-network libvirt-daemon-config-nwfilter libvirt-daemon-system-systemd logrotate mdevctl parted swtpm
+  swtpm-tools systemd-container
+Suggested packages:
+  firewalld nftables auditd nfs-common pm-utils systemtap zfsutils bsd-mailx | mailx parted-doc trousers
+The following NEW packages will be installed:
+  dns-root-data dnsmasq-base iptables jq libip6tc2 libjq1 libnetfilter-conntrack3 libnfnetlink0 libnftnl11 libnss-mymachines libonig5
+  libtpms0 libvirt-daemon-config-network libvirt-daemon-config-nwfilter libvirt-daemon-system libvirt-daemon-system-systemd logrotate
+  mdevctl parted swtpm swtpm-tools systemd-container
+
+
+$> sudo apt install --no-install-recommends virtinst
+The following additional packages will be installed:
+  dconf-gsettings-backend dconf-service gir1.2-freedesktop gir1.2-libosinfo-1.0 glib-networking glib-networking-common glib-networking-services
+  gsettings-desktop-schemas libburn4 libdconf1 libisoburn1 libisofs6 libjte2 libnl-3-200 libnuma1 libosinfo-1.0-0 libproxy1v5 libsoup2.4-1
+  libsoup2.4-common libvirt0 libxslt1.1 libyajl2 osinfo-db python3-libvirt python3-libxml2 session-migration usb.ids xorriso
+Suggested packages:
+  libosinfo-l10n python3-argcomplete xorriso-tcltk jigit cdck
+Recommended packages:
+  libvirt-daemon libvirt-clients qemu-utils virt-viewer
+The following NEW packages will be installed:
+  dconf-gsettings-backend dconf-service gir1.2-freedesktop gir1.2-libosinfo-1.0 glib-networking glib-networking-common glib-networking-services
+  gsettings-desktop-schemas libburn4 libdconf1 libisoburn1 libisofs6 libjte2 libnl-3-200 libnuma1 libosinfo-1.0-0 libproxy1v5 libsoup2.4-1
+  libsoup2.4-common libvirt0 libxslt1.1 libyajl2 osinfo-db python3-libvirt python3-libxml2 session-migration usb.ids virtinst xorriso
+
+$> sudo apt install virtinst
+The following additional packages will be installed:
+  acl adwaita-icon-theme alsa-topology-conf alsa-ucm-conf at-spi2-core cpu-checker dconf-gsettings-backend
+  dconf-service dmidecode fontconfig fontconfig-config fonts-dejavu-core gir1.2-freedesktop
+  gir1.2-libosinfo-1.0 glib-networking glib-networking-common glib-networking-services
+  gsettings-desktop-schemas gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-x
+  gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme i965-va-driver ibverbs-providers
+  intel-media-va-driver ipxe-qemu ipxe-qemu-256k-compat-efi-roms libaa1 libasound2 libasound2-data
+  libasyncns0 libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatspi2.0-0 libavahi-client3
+  libavahi-common-data libavahi-common3 libavc1394-0 libboost-iostreams1.74.0 libboost-thread1.74.0
+  libbrlapi0.8 libburn4 libcaca0 libcacard0 libcairo-gobject2 libcairo2 libcdparanoia0 libcolord2 libcups2
+  libdatrie1 libdaxctl1 libdconf1 libdecor-0-0 libdecor-0-plugin-1-cairo libdeflate0 libdrm-amdgpu1
+  libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdv4 libepoxy0 libfdt1 libflac8 libfontconfig1 libfribidi0
+  libgbm1 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgfapi0 libgfrpc0 libgfxdr0
+  libgl1 libgl1-amber-dri libgl1-mesa-dri libglapi-mesa libglusterfs0 libglvnd0 libglx-mesa0 libglx0
+  libgovirt-common libgovirt2 libgraphite2-3 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-good1.0-0
+  libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk-vnc-2.0-0 libgvnc-1.0-0 libharfbuzz0b libibverbs1
+  libiec61883-0 libigdgmm12 libiscsi7 libisoburn1 libisofs6 libjack-jackd2-0 libjbig0 libjpeg-turbo8
+  libjpeg8 libjson-glib-1.0-0 libjson-glib-1.0-common libjte2 liblcms2-2 libllvm15 libmp3lame0 libmpg123-0
+  libndctl6 libnl-3-200 libnl-route-3-200 libnspr4 libnss3 libnuma1 libogg0 libopus0 liborc-0.4-0
+  libosinfo-1.0-0 libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparted2 libpcap0.8 libpciaccess0
+  libpcsclite1 libphodav-2.0-0 libphodav-2.0-common libpixman-1-0 libpmem1 libpmemobj1 libproxy1v5 libpulse0
+  librados2 libraw1394-11 librbd1 librdmacm1 librest-0.7-0 librsvg2-2 librsvg2-common libsamplerate0
+  libsdl2-2.0-0 libsensors-config libsensors5 libshout3 libslang2 libslirp0 libsndfile1 libsoup-gnome2.4-1
+  libsoup2.4-1 libsoup2.4-common libspeex1 libspice-client-glib-2.0-8 libspice-client-gtk-3.0-5
+  libspice-server1 libtag1v5 libtag1v5-vanilla libthai-data libthai0 libtheora0 libtiff5 libtwolame0
+  liburing2 libusbredirhost1 libusbredirparser1 libv4l-0 libv4lconvert0 libva-x11-2 libva2 libvirglrenderer1
+  libvirt-clients libvirt-daemon libvirt-daemon-driver-qemu libvirt-glib-1.0-0 libvirt-glib-1.0-data
+  libvirt0 libvisual-0.4-0 libvorbis0a libvorbisenc2 libvpx7 libvte-2.91-0 libvte-2.91-common libwavpack1
+  libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0 libwebp7 libx11-xcb1
+  libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-shm0 libxcb-sync1
+  libxcb-xfixes0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6 libxinerama1 libxkbcommon0
+  libxml2-utils libxrandr2 libxrender1 libxshmfence1 libxslt1.1 libxss1 libxtst6 libxv1 libxxf86vm1 libyajl2
+  mesa-va-drivers msr-tools netcat-openbsd osinfo-db ovmf python3-libvirt python3-libxml2 qemu-block-extra
+  qemu-system-common qemu-system-data qemu-system-gui qemu-system-x86 qemu-utils seabios session-migration
+  spice-client-glib-usb-acl-helper ubuntu-mono usb.ids va-driver-all virt-viewer x11-common xorriso
+Suggested packages:
+  gvfs i965-va-driver-shaders libasound2-plugins alsa-utils colord cups-common libdv-bin oss-compat
+  libvisual-0.4-plugins jackd2 liblcms2-utils opus-tools libosinfo-l10n parted libparted-dev libparted-i18n
+  pcscd pulseaudio libraw1394-doc librsvg2-bin xdg-utils lm-sensors speex gstreamer1.0-libav
+  gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libvirt-login-shell
+  libvirt-daemon-driver-storage-gluster libvirt-daemon-driver-storage-iscsi-direct
+  libvirt-daemon-driver-storage-rbd libvirt-daemon-driver-storage-zfs libvirt-daemon-driver-lxc
+  libvirt-daemon-driver-vbox libvirt-daemon-driver-xen libvirt-daemon-system numad samba vde2 debootstrap
+  python3-argcomplete xorriso-tcltk jigit cdck
+The following NEW packages will be installed:
+  acl adwaita-icon-theme alsa-topology-conf alsa-ucm-conf at-spi2-core cpu-checker dconf-gsettings-backend
+  dconf-service dmidecode fontconfig fontconfig-config fonts-dejavu-core gir1.2-freedesktop
+  gir1.2-libosinfo-1.0 glib-networking glib-networking-common glib-networking-services
+  gsettings-desktop-schemas gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-x
+  gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme i965-va-driver ibverbs-providers
+  intel-media-va-driver ipxe-qemu ipxe-qemu-256k-compat-efi-roms libaa1 libasound2 libasound2-data
+  libasyncns0 libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatspi2.0-0 libavahi-client3
+  libavahi-common-data libavahi-common3 libavc1394-0 libboost-iostreams1.74.0 libboost-thread1.74.0
+  libbrlapi0.8 libburn4 libcaca0 libcacard0 libcairo-gobject2 libcairo2 libcdparanoia0 libcolord2 libcups2
+  libdatrie1 libdaxctl1 libdconf1 libdecor-0-0 libdecor-0-plugin-1-cairo libdeflate0 libdrm-amdgpu1
+  libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdv4 libepoxy0 libfdt1 libflac8 libfontconfig1 libfribidi0
+  libgbm1 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgfapi0 libgfrpc0 libgfxdr0
+  libgl1 libgl1-amber-dri libgl1-mesa-dri libglapi-mesa libglusterfs0 libglvnd0 libglx-mesa0 libglx0
+  libgovirt-common libgovirt2 libgraphite2-3 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-good1.0-0
+  libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk-vnc-2.0-0 libgvnc-1.0-0 libharfbuzz0b libibverbs1
+  libiec61883-0 libigdgmm12 libiscsi7 libisoburn1 libisofs6 libjack-jackd2-0 libjbig0 libjpeg-turbo8
+  libjpeg8 libjson-glib-1.0-0 libjson-glib-1.0-common libjte2 liblcms2-2 libllvm15 libmp3lame0 libmpg123-0
+  libndctl6 libnl-3-200 libnl-route-3-200 libnspr4 libnss3 libnuma1 libogg0 libopus0 liborc-0.4-0
+  libosinfo-1.0-0 libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparted2 libpcap0.8 libpciaccess0
+  libpcsclite1 libphodav-2.0-0 libphodav-2.0-common libpixman-1-0 libpmem1 libpmemobj1 libproxy1v5 libpulse0
+  librados2 libraw1394-11 librbd1 librdmacm1 librest-0.7-0 librsvg2-2 librsvg2-common libsamplerate0
+  libsdl2-2.0-0 libsensors-config libsensors5 libshout3 libslang2 libslirp0 libsndfile1 libsoup-gnome2.4-1
+  libsoup2.4-1 libsoup2.4-common libspeex1 libspice-client-glib-2.0-8 libspice-client-gtk-3.0-5
+  libspice-server1 libtag1v5 libtag1v5-vanilla libthai-data libthai0 libtheora0 libtiff5 libtwolame0
+  liburing2 libusbredirhost1 libusbredirparser1 libv4l-0 libv4lconvert0 libva-x11-2 libva2 libvirglrenderer1
+  libvirt-clients libvirt-daemon libvirt-daemon-driver-qemu libvirt-glib-1.0-0 libvirt-glib-1.0-data
+  libvirt0 libvisual-0.4-0 libvorbis0a libvorbisenc2 libvpx7 libvte-2.91-0 libvte-2.91-common libwavpack1
+  libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0 libwebp7 libx11-xcb1
+  libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0 libxcb-present0 libxcb-render0 libxcb-shm0 libxcb-sync1
+  libxcb-xfixes0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6 libxinerama1 libxkbcommon0
+  libxml2-utils libxrandr2 libxrender1 libxshmfence1 libxslt1.1 libxss1 libxtst6 libxv1 libxxf86vm1 libyajl2
+  mesa-va-drivers msr-tools netcat-openbsd osinfo-db ovmf python3-libvirt python3-libxml2 qemu-block-extra
+  qemu-system-common qemu-system-data qemu-system-gui qemu-system-x86 qemu-utils seabios session-migration
+  spice-client-glib-usb-acl-helper ubuntu-mono usb.ids va-driver-all virt-viewer virtinst x11-common xorriso
+  
+
+packages :> 
+		virt-manager
+		virtinst
+		virt-viewer
+		
+		libvirt-daemon-system
+		libvirt-daemon
+
+
+$> sudo apt-get install build-essential
+The following additional packages will be installed:
+  bzip2 cpp cpp-11 dpkg-dev fakeroot fontconfig-config fonts-dejavu-core g++ g++-11 gcc gcc-11 gcc-11-base libalgorithm-diff-perl
+  libalgorithm-diff-xs-perl libalgorithm-merge-perl libasan6 libatomic1 libc-dev-bin libc-devtools libc6-dev libcc1-0 libcrypt-dev libdeflate0
+  libdpkg-perl libfakeroot libfile-fcntllock-perl libfontconfig1 libgcc-11-dev libgd3 libgomp1 libisl23 libitm1 libjbig0 libjpeg-turbo8
+  libjpeg8 liblsan0 libmpc3 libnsl-dev libquadmath0 libstdc++-11-dev libtiff5 libtirpc-dev libtsan0 libubsan1 libwebp7 libxpm4 linux-libc-dev
+  lto-disabled-list make manpages manpages-dev patch rpcsvc-proto
+Suggested packages:
+  bzip2-doc cpp-doc gcc-11-locales debian-keyring g++-multilib g++-11-multilib gcc-11-doc gcc-multilib autoconf automake libtool flex bison gdb
+  gcc-doc gcc-11-multilib glibc-doc git bzr libgd-tools libstdc++-11-doc make-doc man-browser ed diffutils-doc
+The following NEW packages will be installed:
+  build-essential bzip2 cpp cpp-11 dpkg-dev fakeroot fontconfig-config fonts-dejavu-core g++ g++-11 gcc gcc-11 gcc-11-base
+  libalgorithm-diff-perl libalgorithm-diff-xs-perl libalgorithm-merge-perl libasan6 libatomic1 libc-dev-bin libc-devtools libc6-dev libcc1-0
+  libcrypt-dev libdeflate0 libdpkg-perl libfakeroot libfile-fcntllock-perl libfontconfig1 libgcc-11-dev libgd3 libgomp1 libisl23 libitm1
+  libjbig0 libjpeg-turbo8 libjpeg8 liblsan0 libmpc3 libnsl-dev libquadmath0 libstdc++-11-dev libtiff5 libtirpc-dev libtsan0 libubsan1 libwebp7
+  libxpm4 linux-libc-dev lto-disabled-list make manpages manpages-dev patch rpcsvc-proto
+
+
+2023.04.13
+===========================================================================================
+
+$> sudo apt install -y --no-install-recommends ubuntu-desktop
+$> sudo apt dist-upgrade
+
+$> apt show ubuntu-desktop | grep "Recommends"
+
+
+scp "F:\Windows.2023.03.09.iso" injae@192.168.2.206:/mnt/data/iso/Windows.2023.03.09.iso
+scp "D:\.Mys\.OpenSrc\openstack\.builds\vm\virtio-win-0.1.229.iso" injae@192.168.2.206:/mnt/data/iso/virtio-win-0.1.229.iso
+
+$> qemu-img create -f qcow2 /mnt/data/vm/imgs/win10_64bit.qcow2 20G
+$> virt-install --name win10_64 --vcpus 2 --memory 4096 \
+	--os-type windows --os-variant win10 --arch=x86_64 \
+	--disk path=/mnt/data/vm/imgs/win10_64bit.qcow2,format=qcow2,device=disk,bus=virtio \
+	--cdrom /mnt/data/vm/Windows.2023.03.09.iso \
+	--disk path=/mnt/data/vm/virtio-win-0.1.229.iso,device=cdrom \
+	--network network=default,model=virtio \
+	--boot cdrom,hd \
+	--graphics vnc,listen=0.0.0.0,port=5998
+
+
+$> virt-install --name win10 --vcpus 2 --memory 4096 \
+	--os-type windows --os-variant win10 \
+	--disk path=/mnt/data/vm/imgs/win10.qcow2,format=qcow2,device=disk,bus=virtio \
+	--cdrom /mnt/data/vm/Windows.2023.03.09.iso \
+	--disk path=/mnt/data/vm/virtio-win-0.1.229.iso,device=cdrom \
+	--network network=default,model=virtio \
+	--boot cdrom,hd \
+	--graphics vnc,listen=0.0.0.0,port=5999
+
+
+wget https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.185-2/virtio-win-0.1.185.iso
+
+# qemu-img create -f qcow2 [ÀÌ¹ÌÁö ÆÄÀÏ À§Ä¡] [ÀÌ¹ÌÁö ÆÄÀÏ Å©±â]
+$> qemu-img create -f qcow2 /mnt/data/vm/imgs/win10.qcow2 20G
+
+5. ISO·Î °¡»ó¸Ó½Å »ý¼º
+virt-install --name win10 --ram 2048 --vcpus 1 \
+  --network network=default,model=virtio \
+  --disk path=/mnt/data/vm/imgs/win10.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom /mnt/data/vm/Windows.2023.03.09.iso \
+  --disk path=/mnt/data/vm/virtio-win-0.1.229.iso,device=cdrom \
+  --vnc --os-type windows --os-variant win10
+
+
+
+==> ISO ÆÄÀÏ·Î Å¬¶ó¿ìµå¿ë ÀÌ¹ÌÁö ¸¸µé±â
+1) qcow2 ÀÌ¹ÌÁö(µð½ºÅ©) ÆÄÀÏ »ý¼º
+//	qemu-img create -f qcow2 [ÀÌ¹ÌÁö ÆÄÀÏ À§Ä¡] [ÀÌ¹ÌÁö ÆÄÀÏ Å©±â]
+	mkdir /virt
+	qemu-img create -f qcow2 /virt/centos7.qcow2 20G
+
+2) ISO·Î °¡»ó¸Ó½Å »ý¼º
+virt-install --name centos7 --ram 1024 \
+  --disk /virt/centos7.qcow2,format=qcow2 \              //qcow2 ÆÄÀÏ À§Ä¡È®ÀÎ
+  --network network=default \
+  --graphics vnc,listen=0.0.0.0 --noautoconsole \
+  --os-type=linux --os-variant=centos7.0 \
+  --location=/virt/CentOS-7-x86_64-Minimal-2009.iso       //
+
+
+
+
+$> sudo apt -y install traceroute
+$> traceroute 8.8.8.8
+
+$> virt-install --name vm01 --ram 2048 --vcpus 2 \
+    --os-type linux --os-variant ubuntu20.04 \
+    --disk path=vm01.qcow2,device=disk \
+    --disk path=vm01-base.qcow2,device=disk \
+    --import --network network:kang-net --noautoconsole
+
+
+$> virt-install --connect qemu:///system --virt-type kvm --name vm01 --ram 2048 --vcpus 2 \
+    --os-type linux --os-variant ubuntu20.04 \
+    --disk path=vm01.qcow2,device=disk \
+    --disk path=vm01-base.qcow2,device=disk \
+    --import --network network:kang-net --noautoconsole
+
+==> ERROR    Host does not support domain type kvm for virtualization type 'hvm' with architecture 'x86_64'
+   »ó´Ü ¿É¼Ç Ç×¸ñ "--connect qemu:///system --virt-type kvm "À» »èÁ¦ÇÑ´Ù.
+
+$> sudo apt install -y cloud-image-utils
+$> cloud-localds -v --network-config=network-config vm01-base.qcow2 user-data meta-data
+
+$> vi network-config
+ethernets:
+	enp1s0:
+		addresses:
+		- 11.11.0.11/16
+		dhcp4: no
+		gateway4: 11.11.0.1
+		nameservers:
+			addresses:
+			- 8.8.8.8
+version: 2
+
+$> vi network-config
+ethernets:
+	enp1s0:
+		dhcp4: true
+version: 2
+
+$> vi user-data
+#cloud-conifg
+hostname:vm01
+manage_etc_hosts: true
+users:
+	- name: ubuntu
+	  sudo: ALL=(ALL) NOPASSWD:ALL
+	  groups: suers, admin
+	  home: /home/ubuntu
+	  shell: /bin/bash
+	  lock_passwd: false
+ssh_pwauth: true
+disable_root: false
+chpasswd:
+	list: |
+	  ubuntu:test123
+
+$> vi meta-data
+local-hostname:vm01
+
+2023.04.06
+===========================================================================================
+
+
+
+$> virt-install --name ubuntu --vcpus 1 --memory 1024 --os-type linux --os-variant ubuntu22.04 \
+     --disk path=/mnt/data/vm/imgs/ubuntu22.04.qcow2,size=10,format=qcow2 \
+     --cdrom /mnt/data/vm/ubuntu-22.04.1-live-server-amd64.iso \
+     --graphics none --extra-args="console=tty0 console=ttyS0,115200"
+
+
+
+sudo virt-install --name=dev --ram=2048 --vcpus=2 \
+  --cdrom=/data/BIN/MS/OS/ko_windows_7_enterprise_k_with_sp1_x86_dvd_u_677732.iso \
+  --os-type=windows --os-variant=win7 --hvm --arch=x86_64 \
+  --connect=qemu:///system --network network=default,model=virtio \
+  --disk path=/dev/lvm/dev,bus=virtio,cache=none \
+  --disk path=/data/BIN/linux/virtio-win-1.1.16.iso,device=cdrom \
+  --graphics spice --accelerate
+
+== ERROR
+ERROR    Couldn't find kernel for install tree.
+
+
+
+$> qemu-img create -f qcow2 /mnt/data/vm/imgs/ubuntu22.04.qcow2 40G
+$> virt-install --name ubuntu --vcpus 1 --memory 2048 --os-type linux --os-variant ubuntu22.04 \
+     --disk path=/mnt/data/vm/imgs/ubuntu22.04.qcow2,format=qcow2,bus=virtio \
+     --location /mnt/data/vm/ubuntu-22.04.1-live-server-amd64.iso \
+     --graphics none --extra-args="console=tty0 console=ttyS0,115200"
+
+$> qemu-img create -f qcow2 /mnt/data/vm/imgs/ubuntu22.04.qcow2 40G
+$> virt-install --name ubuntu --vcpus 1 --memory 1024 --os-type linux --os-variant ubuntu22.04 \
+     --disk path=/mnt/data/vm/imgs/ubuntu22.04.qcow2,size=10,format=qcow2 \
+     --location /mnt/data/vm/ubuntu-22.04.1-live-server-amd64.iso \
+     --graphics none --extra-args="console=tty0 console=ttyS0,115200"
+
+$> qemu-img create -f qcow2 windows_test.qcow2 30G
+PS> scp "Y:\.myDevs\.OpenSrc\GitLab\.builds\virtio-win-0.1.229.iso" injae@192.168.250.101:/mnt/data/vm/virtio-win-0.1.229.iso
+PS> scp "Y:\.Apps\.Microsoft\Windows\Windows 10\Windows.2023.03.09.iso" injae@192.168.250.101:/mnt/data/vm/Windows.2023.03.09.iso
+PS> scp "Y:\.Apps\ubuntu\ubuntu-22.04.1-desktop-amd64.iso" injae@192.168.250.101:/mnt/data/vm/ubuntu-22.04.1-desktop-amd64.iso
+PS> scp "Y:\.Apps\ubuntu\ubuntu-22.04.1-live-server-amd64.iso" injae@192.168.250.101:/mnt/data/vm/ubuntu-22.04.1-live-server-amd64.iso
+
+PS> scp "Y:\.Apps\.Microsoft\Windows\Windows 10\SW_DVD5_WIN_ENT_LTSC_2019_64BIT_Korean_-2_MLF_X22-05067.ISO" injae@192.168.250.101:/mnt/data/vm/SW_DVD5_WIN_ENT_LTSC_2019_64BIT_Korean_-2_MLF_X22-05067.ISO
+
+$> scp "F:\Windows.2023.03.09.iso" injae@192.168.2.206:/mnt/data/iso/Windows.2023.03.09.iso
+
+
+==== ERROR
+$> sudo virt-install --name test-vm --vcpus 1 --memory 1024 --disk size=5
+ --> This is now a fatal error.
+ --os-variant / --osinfo OS name
+ # You can see a full list of possivle OS name values with:
+      virt-install --osinfo list
+====
+
+
+https://namu.wiki/w/QEMU
+
+injae@dev:/mnt/data/.app$ sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+Note, selecting 'qemu-system-x86' instead of 'qemu-kvm'
+The following additional packages will be installed:
+  acl adwaita-icon-theme alsa-topology-conf alsa-ucm-conf at-spi2-core cpu-checker dconf-gsettings-backend dconf-service dmidecode
+  dns-root-data dnsmasq-base fontconfig fontconfig-config fonts-dejavu-core gir1.2-freedesktop gir1.2-libosinfo-1.0 glib-networking
+  glib-networking-common glib-networking-services gsettings-desktop-schemas gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+  gstreamer1.0-x gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme i965-va-driver ibverbs-providers intel-media-va-driver
+  iptables ipxe-qemu ipxe-qemu-256k-compat-efi-roms jq libaa1 libasound2 libasound2-data libasyncns0 libatk-bridge2.0-0 libatk1.0-0
+  libatk1.0-data libatspi2.0-0 libavahi-client3 libavahi-common-data libavahi-common3 libavc1394-0 libboost-iostreams1.74.0
+  libboost-thread1.74.0 libbrlapi0.8 libburn4 libcaca0 libcacard0 libcairo-gobject2 libcairo2 libcdparanoia0 libcolord2 libcups2 libdatrie1
+  libdaxctl1 libdconf1 libdecor-0-0 libdecor-0-plugin-1-cairo libdeflate0 libdrm-amdgpu1 libdrm-intel1 libdrm-nouveau2 libdrm-radeon1 libdv4
+  libepoxy0 libfdt1 libflac8 libfontconfig1 libfribidi0 libgbm1 libgdk-pixbuf-2.0-0 libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgfapi0
+  libgfrpc0 libgfxdr0 libgl1 libgl1-amber-dri libgl1-mesa-dri libglapi-mesa libglusterfs0 libglvnd0 libglx-mesa0 libglx0 libgovirt-common
+  libgovirt2 libgraphite2-3 libgstreamer-plugins-base1.0-0 libgstreamer-plugins-good1.0-0 libgtk-3-0 libgtk-3-bin libgtk-3-common
+  libgtk-vnc-2.0-0 libgvnc-1.0-0 libharfbuzz0b libibverbs1 libiec61883-0 libigdgmm12 libip6tc2 libiscsi7 libisoburn1 libisofs6
+  libjack-jackd2-0 libjbig0 libjpeg-turbo8 libjpeg8 libjq1 libjson-glib-1.0-0 libjson-glib-1.0-common libjte2 liblcms2-2 libllvm15
+  libmp3lame0 libmpg123-0 libndctl6 libnetfilter-conntrack3 libnfnetlink0 libnftnl11 libnl-3-200 libnl-route-3-200 libnspr4
+  libnss-mymachines libnss3 libnuma1 libogg0 libonig5 libopus0 liborc-0.4-0 libosinfo-1.0-0 libpango-1.0-0 libpangocairo-1.0-0
+  libpangoft2-1.0-0 libparted2 libpcap0.8 libpciaccess0 libpcsclite1 libphodav-2.0-0 libphodav-2.0-common libpixman-1-0 libpmem1 libpmemobj1
+  libproxy1v5 libpulse0 librados2 libraw1394-11 librbd1 librdmacm1 librest-0.7-0 librsvg2-2 librsvg2-common libsamplerate0 libsdl2-2.0-0
+  libsensors-config libsensors5 libshout3 libslang2 libslirp0 libsndfile1 libsoup-gnome2.4-1 libsoup2.4-1 libsoup2.4-common libspeex1
+  libspice-client-glib-2.0-8 libspice-client-gtk-3.0-5 libspice-server1 libtag1v5 libtag1v5-vanilla libthai-data libthai0 libtheora0
+  libtiff5 libtpms0 libtwolame0 liburing2 libusbredirhost1 libusbredirparser1 libv4l-0 libv4lconvert0 libva-x11-2 libva2 libvirglrenderer1
+  libvirt-daemon-config-network libvirt-daemon-config-nwfilter libvirt-daemon-driver-qemu libvirt-daemon-system-systemd libvirt-glib-1.0-0
+  libvirt-glib-1.0-data libvirt0 libvisual-0.4-0 libvorbis0a libvorbisenc2 libvpx7 libvte-2.91-0 libvte-2.91-common libwavpack1
+  libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0 libwebp7 libx11-xcb1 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0
+  libxcb-present0 libxcb-render0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6
+  libxinerama1 libxkbcommon0 libxml2-utils libxrandr2 libxrender1 libxshmfence1 libxss1 libxtst6 libxv1 libxxf86vm1 libyajl2 logrotate
+  mdevctl mesa-va-drivers msr-tools netcat-openbsd osinfo-db ovmf parted python3-libvirt python3-libxml2 qemu-block-extra qemu-system-common
+  qemu-system-data qemu-system-gui qemu-utils seabios session-migration spice-client-glib-usb-acl-helper swtpm swtpm-tools systemd-container
+  ubuntu-mono usb.ids va-driver-all virt-viewer x11-common xorriso
+Suggested packages:
+  ifupdown gvfs i965-va-driver-shaders firewalld nftables libasound2-plugins alsa-utils colord cups-common libdv-bin oss-compat
+  libvisual-0.4-plugins jackd2 liblcms2-utils opus-tools libosinfo-l10n libparted-dev libparted-i18n pcscd pulseaudio libraw1394-doc
+  librsvg2-bin xdg-utils lm-sensors speex gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libvirt-login-shell
+  libvirt-daemon-driver-storage-gluster libvirt-daemon-driver-storage-iscsi-direct libvirt-daemon-driver-storage-rbd
+  libvirt-daemon-driver-storage-zfs libvirt-daemon-driver-lxc libvirt-daemon-driver-vbox libvirt-daemon-driver-xen numad auditd nfs-common
+  pm-utils systemtap zfsutils bsd-mailx | mailx parted-doc samba vde2 debootstrap trousers python3-argcomplete xorriso-tcltk jigit cdck
+The following NEW packages will be installed:
+  acl adwaita-icon-theme alsa-topology-conf alsa-ucm-conf at-spi2-core bridge-utils cpu-checker dconf-gsettings-backend dconf-service
+  dmidecode dns-root-data dnsmasq-base fontconfig fontconfig-config fonts-dejavu-core gir1.2-freedesktop gir1.2-libosinfo-1.0
+  glib-networking glib-networking-common glib-networking-services gsettings-desktop-schemas gstreamer1.0-plugins-base
+  gstreamer1.0-plugins-good gstreamer1.0-x gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme i965-va-driver ibverbs-providers
+  intel-media-va-driver iptables ipxe-qemu ipxe-qemu-256k-compat-efi-roms jq libaa1 libasound2 libasound2-data libasyncns0
+  libatk-bridge2.0-0 libatk1.0-0 libatk1.0-data libatspi2.0-0 libavahi-client3 libavahi-common-data libavahi-common3 libavc1394-0
+  libboost-iostreams1.74.0 libboost-thread1.74.0 libbrlapi0.8 libburn4 libcaca0 libcacard0 libcairo-gobject2 libcairo2 libcdparanoia0
+  libcolord2 libcups2 libdatrie1 libdaxctl1 libdconf1 libdecor-0-0 libdecor-0-plugin-1-cairo libdeflate0 libdrm-amdgpu1 libdrm-intel1
+  libdrm-nouveau2 libdrm-radeon1 libdv4 libepoxy0 libfdt1 libflac8 libfontconfig1 libfribidi0 libgbm1 libgdk-pixbuf-2.0-0
+  libgdk-pixbuf2.0-bin libgdk-pixbuf2.0-common libgfapi0 libgfrpc0 libgfxdr0 libgl1 libgl1-amber-dri libgl1-mesa-dri libglapi-mesa
+  libglusterfs0 libglvnd0 libglx-mesa0 libglx0 libgovirt-common libgovirt2 libgraphite2-3 libgstreamer-plugins-base1.0-0
+  libgstreamer-plugins-good1.0-0 libgtk-3-0 libgtk-3-bin libgtk-3-common libgtk-vnc-2.0-0 libgvnc-1.0-0 libharfbuzz0b libibverbs1
+  libiec61883-0 libigdgmm12 libip6tc2 libiscsi7 libisoburn1 libisofs6 libjack-jackd2-0 libjbig0 libjpeg-turbo8 libjpeg8 libjq1
+  libjson-glib-1.0-0 libjson-glib-1.0-common libjte2 liblcms2-2 libllvm15 libmp3lame0 libmpg123-0 libndctl6 libnetfilter-conntrack3
+  libnfnetlink0 libnftnl11 libnl-3-200 libnl-route-3-200 libnspr4 libnss-mymachines libnss3 libnuma1 libogg0 libonig5 libopus0 liborc-0.4-0
+  libosinfo-1.0-0 libpango-1.0-0 libpangocairo-1.0-0 libpangoft2-1.0-0 libparted2 libpcap0.8 libpciaccess0 libpcsclite1 libphodav-2.0-0
+  libphodav-2.0-common libpixman-1-0 libpmem1 libpmemobj1 libproxy1v5 libpulse0 librados2 libraw1394-11 librbd1 librdmacm1 librest-0.7-0
+  librsvg2-2 librsvg2-common libsamplerate0 libsdl2-2.0-0 libsensors-config libsensors5 libshout3 libslang2 libslirp0 libsndfile1
+  libsoup-gnome2.4-1 libsoup2.4-1 libsoup2.4-common libspeex1 libspice-client-glib-2.0-8 libspice-client-gtk-3.0-5 libspice-server1
+  libtag1v5 libtag1v5-vanilla libthai-data libthai0 libtheora0 libtiff5 libtpms0 libtwolame0 liburing2 libusbredirhost1 libusbredirparser1
+  libv4l-0 libv4lconvert0 libva-x11-2 libva2 libvirglrenderer1 libvirt-clients libvirt-daemon libvirt-daemon-config-network
+  libvirt-daemon-config-nwfilter libvirt-daemon-driver-qemu libvirt-daemon-system libvirt-daemon-system-systemd libvirt-glib-1.0-0
+  libvirt-glib-1.0-data libvirt0 libvisual-0.4-0 libvorbis0a libvorbisenc2 libvpx7 libvte-2.91-0 libvte-2.91-common libwavpack1
+  libwayland-client0 libwayland-cursor0 libwayland-egl1 libwayland-server0 libwebp7 libx11-xcb1 libxcb-dri2-0 libxcb-dri3-0 libxcb-glx0
+  libxcb-present0 libxcb-render0 libxcb-shm0 libxcb-sync1 libxcb-xfixes0 libxcomposite1 libxcursor1 libxdamage1 libxfixes3 libxi6
+  libxinerama1 libxkbcommon0 libxml2-utils libxrandr2 libxrender1 libxshmfence1 libxss1 libxtst6 libxv1 libxxf86vm1 libyajl2 logrotate
+  mdevctl mesa-va-drivers msr-tools netcat-openbsd osinfo-db ovmf parted python3-libvirt python3-libxml2 qemu-block-extra qemu-system-common
+  qemu-system-data qemu-system-gui qemu-system-x86 qemu-utils seabios session-migration spice-client-glib-usb-acl-helper swtpm swtpm-tools
+  systemd-container ubuntu-mono usb.ids va-driver-all virt-viewer virtinst x11-common xorriso
+0 upgraded, 261 newly installed, 0 to remove and 1 not upgraded.
+Need to get 120 MB of archives.
+After this operation, 473 MB of additional disk space will be used.
+
+2023.04.05
+===========================================================================================
+
+
+  SPEP : Make a Bridge Network for the VMs (Virtual Machines)
+network:
+    ethernets:
+       eth0:
+          dhcp4: false
+          dhcp6: false
+     bridges:
+        br0:
+           interfaces: [eth0]
+           dhcp4: false
+           addresses: [10.254.152.27/24]
+           macaddress: 01:26:3b:4b:1d:43
+           routes:
+              - to: default
+                via: 10.254.152.1
+                metric: 100
+           nameservers:
+                addresses: [8.8.8.8]
+           parameters:
+               stp: false
+          dhcp6: false
+     version: 2
+
+$> sudo netplan apply
+$> ip route s
+
+$> sudo usermod -aG kvm $USER
+$> sudo usermod -aG libvirt $USER
+$> sudo usermod -G libvirt -a itslinux
+  -G, --groups GROUPS 			new list of supplementary GROUPS
+  -a, --append							append the user to the supplemental GROUPS
+  													mentioned by the -G option without removing
+  													the user from other groups
+
+# Virtual Machine management tools
+$> sudo apt -y install virt-top libguestfs-tools libosinfo-bin  qemu-system virt-manager
+
+
+2023.04.04
+===========================================================================================
+
+
+# µð½ºÅ© Ãß°¡
+$> sudo mkfs.ext4 /dev/sdb1
+$> sudo blkid
+$> sudo mkdir -p /mnt/data
+$> sudo chown injae:injae /mnt/data
+$> sudo vi /etc/fstab
+    UUID="024553c8-c431-4a15-928d-23ad249a9c1d" /mnt/data ext4 defaults 0 0
+$> sudo mount -a
+
+$> sudo apt update && sudo apt upgrade -y
+
+
+# Note, selecting 'qemu-system-x86' instead of 'qemu-kvm'
+sudo apt install qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
+sudo apt download libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
+
+$> sudo apt install -y libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon
+$> sudo apt install -y libvirt-clients libvirt-daemon-system bridge-utils qemu-kvm
+
+$> sudo systemctl enable --now libvirtd
+
+
+
+2023.03.29
+===========================================================================================
+
+
+$> virt-install --virt-type=kvm \
+	--name Win10 --vcpus 2 --memory 4096 \
+	--os-type windows --os-variant win10 \
+	--disk path=windows_test.qcow2,format=qcow2,bus=virtio \
+	--cdrom Windows.2023.03.09.iso \
+	--network network=default,model=virtio \
+	--boot cdrom,hd \
+	--graphics vnc,listen=0.0.0.0,port=5999
+	
+
+# ÀÌ¹ÌÁö ¾ÐÃà ¹× »çÀÌÁî Ãà¼Ò
+
+
+2023.04.03
+===========================================================================================
+
+$> virt-install --virt-type=kvm \
+	--name Win10 --vcpus 2 --memory 4096 \
+	--os-type windows --os-variant win10 \
+	--disk path=windows_test.qcow2,format=qcow2,bus=virtio \
+	--cdrom Windows.2023.03.09.iso \
+	--network network=default,model=virtio \
+	--boot cdrom,hd \
+	--graphics vnc,listen=0.0.0.0,port=5999
+
+
+$> virt-install --name=win10 --ram=4096 --cpu=host \
+     --vcpus=1 --os-type=windows --os-variant=win10 \
+     --disk path=windows_test.qcow2,format=qcow2,bus=virtio \
+     --cdrom Windows.2023.03.09.iso \
+     --network network=default,model=virtio \
+     --graphics vnc,password=test,listen=0.0.0.0
+
+
+     --cdrom virtio-win-0.1.229.iso \
+     --boot cdrom,hd
+
+
+
+$> virsh domblklist win10
+
+# ovmf ÆÐÅ°Áö ¼³Ä¡
+$> sudo apt install ovmf
+
+# ±×·ì¿¡ °èÁ¤ Ãß°¡
+$> adduser $(id -un) libvirt
+$> adduser $(id -un) kvm
+
+# ³×Æ®¿öÅ©
+======================================
+$> virsh net-list
+$> virsh net-info --network default
+$> virsh net-dhcp-leases default
+
+# storage pool
+$> virsh pool-list
+$> virsh vol-list injae
+$> virsh vol-delete --pool injae storage_pool_name
+$> virsh vol-refresh injae
+
+# osinfo-query os
+$> virt-install --os-variant list
+
+$> sudo systemctl start libvirtd
+
+# once started, you can connect the CDROM containing 
+$> virsh attach-disk VM_NAME FILENAME hdc --type cdrom --mode readonly
+$> virsh reset VM_NAME
+
+# cd-rom media inject/eject
+$> virsh change-media $VMName --path sda --source $ISO --insert --live
+$> virsh change-media $VMName --path sda --eject --live
+
+# Get the VNC port number
+$> virsh vncdisplay win10
+
+# °¡»ó¸Ó½Å Á¤Áö ¹× Àç°³
+$> virsh suspend VM_NAME
+$> virsh resume VM_NAME
+
+# °¡»ó¸Ó½Å ¼öÁ¤
+$> virsh edit VM_NAME
+
+# To see information about a domain (VM) called openbsd.
+$> virsh dumpxml VM_NAME
+
+# deleting a virtual machine
+$> virsh undefine VM_NAME
+
+# shutdown the quest
+$> virsh shutdown VM_NAME
+$> virsh destroy VM_NAME
+
+# List all a VM geusts
+$> virsh list
+$> virsh list --all
+
+# ÇöÀç ·Î±×¸°ÇÑ »ç¿ëÀÚ°¡ ¼ÓÇÑ ±×·ì È®ÀÎ
+$> groups
+
+# Æ¯Á¤ »ç¿ëÀÚ ±×·ì È®ÀÎ
+$> groups tomcat
+
+
+# libvirt-clients : °¡»óÈ­ ÇÃ·§ÆûÀ» °ü¸®ÇÏ±â À§ÇÑ ¼ÒÇÁÆ®¿þ¾î
+# virtinst : °¡»ó ¸Ó½ÅÀ» ¸¸µé±âÀ§ÇÑ ¸í·ÉÁÙ µµ±¸ ÁýÇÕ
+# virt-manager : »ç¿ëÇÏ±â ½¬¿î GUI ÀÎÅÍÆäÀÌ½º¿Í libvirt¸¦ ÅëÇØ °¡»ó ¸Ó½ÅÀ» °ü¸®ÇÏ±â À§ÇÑ ¸í·É ÁÙ À¯Æ¿¸®Æ¼
+
+
+$> qemu-img create -f qcow2 windows_test.qcow2 30G
+PS> scp "Y:\.myDevs\.OpenSrc\GitLab\.builds\virtio-win-0.1.229.iso" stack@192.168.250.101:~/virtio-win-0.1.229.iso
+PS> scp "Y:\.Apps\.Microsoft\Windows\Windows 10\Windows.2023.03.09.iso" stack@192.168.250.101:~/Windows.2023.03.09.iso
+
+$> virt-install --connect qemu:///system \
+--name ws2012 --ram 2048 --vcpus 2 \
+--network network=default,model=virtio \
+--disk path=ws2012.qcow2,format=qcow2,device=disk,bus=virtio \
+--cdrom /path/to/en_windows_server_2012_x64_dvd.iso \
+--disk path=/path/to/virtio-win-0.1-XX.iso,device=cdrom \
+--vnc --os-type windows --os-variant win2k12 \
+--os-distro windows --os-version 2012
+
+$> virt-install --name=win10 --ram=4096 --cpu=host \
+     --vcpus=1 --os-type=windows --os-variant=win10 \
+     --disk path=windows_test.qcow2,format=qcow2,bus=virtio \
+     --disk Windows.2023.03.09.iso,device=cdrom,bus=ide \
+     --disk virtio-win-0.1.229.iso,device=cdrom,bus=ide \
+     --network network=default,model=virtio \
+     --graphics vnc,password=test,listen=0.0.0.0
+
+$> virt-install --name=win10 --ram=4096 --cpu=host \
+     --vcpus=1 --os-type=windows --os-variant=win10 \
+     --disk path=windows_test.qcow2,format=qcow2,bus=virtio \
+     --cdrom Windows.2023.03.09.iso \
+     --network network=default,model=virtio \
+     --graphics vnc,password=test,listen=0.0.0.0
+
+
+     --cdrom virtio-win-0.1.229.iso \
+     --boot cdrom,hd
+     --boot uefi
+
+2023.03.31
+===========================================================================================
+VirtIO
+
+# glance ¼­ºñ½º Å×½ºÆ®
+$> openstack image create "cirrors" --file cirros-0.3.5-x86_64-disk.img --disk-format qcow2 --container-format bare --public
+$> openstack image list
+
+$> glance --version
+$> glance image-show [id ¹øÈ£]
+$> glance deactivate [id ¹øÈ£]
+$> glance image-reactivate [id ¹øÈ£]
+
+# »ç¿ëÀÚ °èÁ¤À» kvm ±×·ì¿¡ Ãß°¡
+$> sudo adduser $(id -un) kvm
+
+# run-level 3 º¯°æ
+$> systemctl set-default multi-user.target
+
+# NIC µå¶óÀÌ¹ö Á¤º¸ È®ÀÎ
+$> ethtool -i eth0
+
+# ÀÎ½¼ÅÏ½º »ý¼º
+$> openstack server create --flavor m1.nano --image cirros-0.5.2-x86_64-disk --nic net-id=public ServerName
+
+# ÀÎ½ºÅÏ½º »óÅÂ È­ÀÎ
+$> openstack server list
+
+# Flavor »ý¼º
+$> openstack flavor create --id 6 --vcpus 1 --ram 1024 --disk 20 m1.xsmall
+
+# ÀÌ¹ÌÁö »ý¼º
+$> openstack image create "CentOS7" --file CentOS-7-x86_64-GenericCloud-2003.qcow2 --disk-format qcow2 --container-format bare --public
+
+
+# °¡»ó ÄÜ¼ÖÀ» ÀÌ¿ëÇÏ¿© ÀÎ½ºÅÏ½º Á¢±Ù
+$> openstack console url show abcd
+
+# VM NIC Á¤º¸ È®ÀÎ
+$> virsh domiflist 1
+
+
+PS> scp "C:\Users\sdh\Downloads\admin-openrc.sh" stack@192.168.250.101:~/admin-openrc.sh
+
+$> sudo apt-get update -y && sudo apt-get -y upgrade
+$> bash -x ./stack.sh 2>&1 | tee ../stack.2023.03.29.01.log.txt
+
+# openvswitch ¸ñ·Ï
+$> ovs-vsctl show
+
+#
+$> openstack network list
+$> openstack network agent list
+$> openstack network create --share --provider-physical-network provider --provider-network-type flat provider1
+
+# VM ¸ñ·Ï
+$> virsh list
+
+$> virsh domiflist instance-00000001
+
+2023.03.29
+===========================================================================================
+
+
+
+sudo systemctl stop devstack@c-api
+sudo systemctl stop devstack@c-sch
+sudo systemctl stop devstack@c-vol
+sudo systemctl stop devstack@dstat
+sudo systemctl stop devstack@etcd
+sudo systemctl stop devstack@g-api
+sudo systemctl stop devstack@n-cond-cell1
+sudo systemctl stop devstack@n-api-meta
+sudo systemctl stop devstack@n-api
+sudo systemctl stop devstack@n-cpu
+sudo systemctl stop devstack@n-novnc-cell1
+sudo systemctl stop devstack@n-sch
+sudo systemctl stop devstack@n-super-cond
+sudo systemctl stop devstack@placement-api
+sudo systemctl stop devstack@q-ovn-metadata-agent
+sudo systemctl stop devstack@q-svc
+sudo systemctl stop devstack@keystone
+
+
+2023.03.24
+===========================================================================================
+git clone https://github.com/PyMySQL/PyMySQL.git
+
+building 'myModule' extension
+gcc -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -fPIC -I/home/injae/.pyenv/versions/test/include -I/home/injae/.pyenv/versions/3.11.2/include/python3.11 -c test.c -o test.o
+gcc -shared -L/home/injae/.pyenv/versions/3.11.2/lib -Wl,-rpath,/home/injae/.pyenv/versions/3.11.2/lib -L/home/injae/.pyenv/versions/3.11.2/lib -Wl,-rpath,/home/injae/.pyenv/versions/3.11.2/lib test.o -L/home/injae/.pyenv/versions/3.11.2/lib -o myModule.cpython-311-x86_64-linux-gnu.so
+
+sudo systemctl stop devstack@c-api &&
+  sudo systemctl stop devstack@c-sch &&
+  sudo systemctl stop devstack@c-vol &&
+  sudo systemctl stop devstack@dstat &&
+  sudo systemctl stop devstack@etcd &&
+  sudo systemctl stop devstack@g-api &&
+  sudo systemctl stop devstack@keystone &&
+  sudo systemctl stop devstack@n-api-meta &&
+  sudo systemctl stop devstack@n-api &&
+  sudo systemctl stop devstack@n-cond-cell1 &&
+  sudo systemctl stop devstack@n-cpu &&
+  sudo systemctl stop devstack@n-novnc-cell1 &&
+  sudo systemctl stop devstack@n-sch &&
+  sudo systemctl stop devstack@n-super-cond &&
+  sudo systemctl stop devstack@placement-api &&
+  sudo systemctl stop devstack@q-ovn-metadata-agent &&
+  sudo systemctl stop devstack@q-svc
+
+2023.03.23
+===========================================================================================
+# apt install neutron-server neutron-plugin-ml2 \
+  neutron-openvswitch-agent neutron-l3-agent neutron-dhcp-agent \
+  neutron-metadata-agent
+
+/usr/local/bin/neutron-server --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+sudo systemctl enable devstack@q-svc.service
+sudo systemctl stop devstack@q-svc.service
+sudo systemctl start devstack@q-svc.service
+
+/usr/bin/python3.10 test.01/t01.py --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+
+
+# ¿ø°Ý µð¹ö±ë ¿À·ù
+=======
+  neutron/common/eventlet_utils.py:monkey_pathc()
+    if os.name != 'nt':
+        eventlet.monkey_patch(thread=False)
+
+
+
+
+
+$> export PS4='# ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]}() - [${SHLVL},${BASH_SUBSHELL},$?] '
+$> bash -x ./stack.sh 2>&1 | tee ../stack.01.log.txt
+
+
+$> NEUTRON_DEPLOY_MOD_WSGI=True bash -x ./stack.sh 2>&1 | tee ../stack.log.2023.03.15.01.txt
+$> NEUTRON_DEPLOY_MOD_WSGI=True bash -x ./stack.sh 2>&1 | tee ../stack.log.2023.03.15.02.txt
+$> bash -x ./stack.sh 2>&1 | tee ../stack.log.2023.03.15.03.txt
+
+
+sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install python3.10 python3.10-dev
+sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install apache2 apache2-dev bc bsdmainutils curl g++ gawk gcc gettext git graphviz iputils-ping libapache2-mod-proxy-uwsgi libffi-dev libjpeg-dev libpcre3-dev libpq-dev libssl-dev libsystemd-dev libxml2-dev libxslt1-dev libyaml-dev lsof openssh-server openssl pkg-config psmisc python3-dev python3-pip python3-systemd python3-venv tar tcpdump unzip uuid-runtime wget wget zlib1g-dev libkrb5-dev libldap2-dev libsasl2-dev memcached python3-mysqldb sqlite3 conntrack curl ebtables genisoimage iptables iputils-arping kpartx libjs-jquery-tablesorter parted pm-utils python3-mysqldb socat sqlite3 sudo vlan lsscsi open-iscsi cryptsetup dosfstools genisoimage gir1.2-libosinfo-1.0 netcat-openbsd open-iscsi qemu-utils sg3-utils sysfsutils lvm2 qemu-utils thin-provisioning-tools acl dnsmasq-base dnsmasq-utils ebtables haproxy iptables iputils-arping iputils-ping postgresql-server-dev-all python3-mysqldb sqlite3 sudo vlan pcp
+
+sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt -U os-testr
+env http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= /opt/stack/requirements/.venv/bin/pip install -c /opt/stack/requirements/upper-constraints.txt -U pbr
+env http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= /opt/stack/requirements/.venv/bin/pip install -c /opt/stack/requirements/upper-constraints.txt /opt/stack/requirements
+  Successfully installed Parsley-1.3 PrettyTable-3.4.1 PyYAML-6.0 attrs-22.1.0 autopage-0.5.1 beagle-0.3.0 certifi-2022.12.7 charset-normalizer-2.1.1 cliff-4.0.0 cmd2-2.4.2 fixtures-4.0.1 idna-3.3 importlib-metadata-4.12.0 openstack-requirements-1.2.1.dev5764 packaging-21.3 pyparsing-3.0.9 pyperclip-1.8.2 requests-2.28.1 six-1.16.0 stevedore-4.0.2 urllib3-1.26.12 wcwidth-0.2.5 zipp-3.8.1
+
+sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt -U pbr
+
++ ./stack.sh:main:808                      :   python3 -m venv /opt/stack/bindep-venv
++ ./stack.sh:main:810                      :   /opt/stack/bindep-venv/bin/pip install bindep
+  Successfully installed Parsley-1.3 bindep-2.11.0 distro-1.8.0 packaging-23.0 pbr-5.11.1
+
+BINDEP_CMD=/opt/stack/bindep-venv/bin/bindep
+
+
++ ./stack.sh:main:827                      :   install_rpc_backend
++ lib/rpc_backend:install_rpc_backend:54   :   install_package rabbitmq-server
++ functions-common:real_install_package:1450 :   apt_get install rabbitmq-server
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install rabbitmq-server
+
++ lib/rpc_backend:rabbit_setuser:174       :   sudo rabbitmqctl list_users
++ lib/rpc_backend:rabbit_setuser:181       :   sudo rabbitmqctl add_user stackrabbit openstack
++ lib/rpc_backend:rabbit_setuser:184       :   sudo rabbitmqctl set_permissions stackrabbit '.*' '.*' '.*'
++ lib/rpc_backend:restart_rpc_backend:110  :   sudo rabbitmqctl change_password stackrabbit openstack
++ lib/rpc_backend:restart_rpc_backend:119  :   sudo rabbitmqctl delete_user guest
+
+
++ ./stack.sh:main:831                      :   install_database
++ lib/databases/mysql:install_database_mysql:173 :   sudo debconf-set-selections
++ functions-common:real_install_package:1450 :   apt_get install mysql-server
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install mysql-server
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt PyMySQL
+
+
++ ./stack.sh:main:837                      :   is_service_enabled neutron
++ ./stack.sh:main:838                      :   install_neutron_agent_packages
+
+
+Installing etcd
++ lib/etcd3:install_etcd3:106              :   sudo mkdir -p /opt/stack/bin
++ lib/etcd3:install_etcd3:107              :   sudo mkdir -p /opt/stack/data/etcd
+sudo mount -t tmpfs -o nodev,nosuid,size=512M tmpfs /opt/stack/data/etcd
+wget --progress=dot:giga -t 2 -c https://github.com/etcd-io/etcd/releases/download/v3.3.12/etcd-v3.3.12-linux-amd64.tar.gz -O /home/stack/devstack/files/etcd-v3.3.12-linux-amd64.tar.gz
+tar xzvf /home/stack/devstack/files/etcd-v3.3.12-linux-amd64.tar.gz -C /home/stack/devstack/files
++ lib/etcd3:install_etcd3:121              :   sudo cp /home/stack/devstack/files/etcd-v3.3.12-linux-amd64/etcd /opt/stack/bin/etcd
++ lib/etcd3:install_etcd3:122              :   sudo cp /home/stack/devstack/files/etcd-v3.3.12-linux-amd64/etcdctl /opt/stack/bin/etcdctl
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt etcd3
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt etcd3gw
+
++ ./stack.sh:main:873                      :   install_apache_uwsgi
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install uwsgi uwsgi-plugin-python3 libapache2-mod-proxy-uwsgi
++ lib/apache:install_apache_uwsgi:130      :   sudo a2enmod proxy
++ functions-common:restart_service:2324    :   sudo /bin/systemctl restart apache2
+
+
++ lib/keystone:install_keystone:535        :   git_clone https://opendev.org/openstack/keystone.git /opt/stack/keystone stable/zed
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt -e /opt/stack/keystone
++ ./stack.sh:main:894                      :   configure_keystone
++ lib/keystone:configure_keystone:192      :   sudo install -d -o stack /etc/keystone
+
+
+
++ ./stack.sh:main:926                      :   stack_install_service neutron
++ lib/neutron-legacy:install_mutnauq:477   :   git_clone https://opendev.org/openstack/neutron.git /opt/stack/neutron stable/zed
++ functions-common:git_timed:710           :   timeout -s SIGINT 0 git clone https://opendev.org/openstack/neutron.git /opt/stack/neutron --branch stable/zed
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt -e /opt/stack/neutron
+  Successfully installed logutils-0.3.5 ncclient-0.6.13 neutron neutron-lib-3.1.0 os-client-config-2.1.0 os-ken-2.5.0 os-resource-classes-1.1.0 os-traits-2.9.0 os-vif-2.8.0 osc-lib-2.6.2 ovs-2.17.1.post1 ovsdbapp-2.1.0 pecan-1.4.2 pyroute2-0.7.2 python-designateclient-5.0.0 python-neutronclient-8.1.0 setproctitle-1.3.2 sortedcontainers-2.4.0
+sudo chown -R stack /opt/stack/neutron/neutron.egg-info
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt tox
+  Successfully installed distlib-0.3.6 filelock-3.8.0 platformdirs-2.5.2 pluggy-1.0.0 py-1.11.0 tomli-2.0.1 tox-3.28.0 virtualenv-20.16.3
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install fakeroot make openvswitch-switch
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install ovn-central ovn-controller-vtep ovn-host
+
+
+
+
++ functions-common:apt_get:1230            :   sudo DEBIAN_FRONTEND=noninteractive http_proxy= https_proxy= no_proxy= apt-get --option Dpkg::Options::=--force-confold --assume-yes install qemu-system libvirt-clients libvirt-daemon-system libvirt-dev python3-libvirt
++ functions-common:git_timed:710           :   timeout -s SIGINT 0 git clone https://github.com/novnc/novnc.git /opt/stack/novnc --branch v1.3.0
++ functions-common:git_timed:710           :   timeout -s SIGINT 0 git clone https://opendev.org/openstack/nova.git /opt/stack/nova --branch stable/zed
++ inc/python:pip_install:190               :   sudo -H LC_ALL=en_US.UTF-8 SETUPTOOLS_USE_DISTUTILS=stdlib http_proxy= https_proxy= no_proxy= PIP_FIND_LINKS= python3.10 -m pip install -c /opt/stack/requirements/upper-constraints.txt -e /opt/stack/nova
+  Successfully installed microversion-parse-1.0.1 nova numpy-1.23.2 websockify-0.10.0
+
+
++ lib/apache:enable_apache_site:207        :   sudo a2ensite nova-api-wsgi
+
+10907  => + ./stack.sh:main:932                      :   configure_nova
++ functions-common:restart_service:2324    :   sudo /bin/systemctl restart iscsid
++ lib/nova:configure_nova:320              :   create_nova_conf
++ lib/nova:create_nova_conf:464            :   configure_keystone_authtoken_middleware /etc/nova/nova.conf nova
++ lib/nova:create_nova_conf:468            :   configure_cinder_access
++ lib/apache:apache_site_config_for:189    :   echo /etc/apache2/sites-available/nova-api-wsgi.conf
++ lib/apache:write_uwsgi_config:303        :   apache_conf=/etc/apache2/sites-available/nova-api-wsgi.conf
+
+
+
+
+11877	=> + ./stack.sh:main:938                      :   configure_placement

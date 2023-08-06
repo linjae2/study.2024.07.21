@@ -1,0 +1,68 @@
+$> sudo dpkg -i /data/deb/code_1.78.2-1683731010_amd64.deb
+
+$> virt-install --name redmine --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.redmine.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+
+ # 가상머신 스냅샷 명령어
+$> virsh snapshot-create-as --domain redmine --name {snapshot-name}
+$> virsh snapshot-list --domain redmine
+$> virsh snapshot-info --domain redmine --snapshotname {snapshot-name}
+$> virsh snapshot-revert --domain redmine --snapshotname {snapshot-name} --running
+$> virsh snapshot-delete --domain redmine --snapshotname {snapshot-name}
+$> virsh help snapshot-create-as
+
+$> virsh snapshot-create-as --domain redmine --name test
+$> virsh snapshot-create-as --domain redmine --name test1
+
+$> sudo apt -y install build-essential git-core golang-go nodejs npm libgdbm-compat-dev
+$> sudo apt -y install libgdbm-dev libgdbm6 libc6-dev libgmp10 libgmp-dev libgmp3-dev
+$> sudo apt -y install zlib1g-dev libreadline-dev libssl-dev autoconf bison libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev sqlite3 libsqlite3-dev libkrb5-dev gettext
+$> sudo apt -y install imagemagick ghostscript
+
+
+$> virsh snapshot-create-as --domain redmine --name "base" --description "RedMine Ready"
+
+$> wget https://cache.ruby-lang.org/pub/ruby/3.1/ruby-3.1.4.tar.gz
+
+$> git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+$> echo 'eval "$(~/.rbenv/bin/rbenv init - bash)"' >> ~/.bashrc
+$> git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build
+
+$> rbenv --debug install 3.1.4
+$> rbenv global 3.1.4
+
+
+   RedMine V 5.0.5(2023.0505)
+   
+   $> wget https://www.redmine.org/releases/redmine-5.0.5.tar.gz
+   $> sudo apt -y install postgresql postgresql-contrib libpq-dev
+   
+      PostgresSQL을 설치하면 postgres라는 계정이 생성된다.
+      postgres 계정으로 변경하여 PostgresSQL을 관리한다.
+      $> sudo -i -u postgres or
+      $> sudo -u postgres psql
+      
+        PostgreSQL DB and User Create
+        
+        #> CREATE ROLE redmine LOGIN ENCRYPTED PASSWORD '1234' NOINHERIT VALID UNTIL 'infinity';
+        #> CREATE DATABASE redmine WITH ENCODING='UTF8' OWNER=redmine;
+        
+  $> bundle install
+  $> git clone -b v6.1.7.2 https://github.com/rails/rails.git ./.pkgs/rails_v6.1.7.2
+  $> git clone -b v2.2.7 https://github.com/rack/rack.git ./.pkgs/rack_v2.2.7
+  $> git clone -b v5.6.5 https://github.com/puma/puma.git ./.pkgs/puma_v5.6.5
+
+  $> bundle exec rake generate_secret_token
+  $> RAILS_ENV=production bundle exec rake db:migrate
+  
+  $> RAILS_ENV=production REDMINE_LANG=ko bundle exec rake redmine:load_default_data
+  $> bundle exec rails server -e production
+  $> ./bin/rails server -e production
+
+
+
+

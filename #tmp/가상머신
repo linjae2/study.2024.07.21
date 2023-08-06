@@ -1,0 +1,24 @@
+$> virt-install --name test --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.test.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+
+$> virt-install --name u.01 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.01.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.02 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.02.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+$> virt-install --name u.03 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/imgs/ubuntu22.04.u.03.qcow2,format=qcow2,device=disk,bus=virtio \
+  --network network=default,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
