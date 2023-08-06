@@ -4,13 +4,13 @@ token : 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
 
 # ubuntu 22.04
 
-```
+```shell
 $> lsb_release -a
 ```
 
 ## VS Code git 연동
 
-## 인텔리제이 설
+## 인텔리제이 설치
 
 ```shell
 $> sudo tar xf ideaIC-2023.2.tar.gz -C /opt/
