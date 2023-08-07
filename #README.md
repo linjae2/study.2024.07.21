@@ -2,6 +2,12 @@
 
 token : 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
 
+* GitHub Access Tocken 연결
+
+   ```shell
+   $> git clone https://<user-id>:<token>@<repository url>
+   ```
+
 # ubuntu 22.04
 
 ```shell
