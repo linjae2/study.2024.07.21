@@ -1,0 +1,83 @@
+
+
+####
+GET http://172.31.37.149:8080/hello/Lee/injae HTTP/1.1
+
+
+
+//@endpoint=http://192.168.250.99:8901
+@authentication-endpoint=http://172.31.37.149:8901
+
+@defaultZone-endpoint=http://172.31.37.149:8761
+
+####
+GET {{authentication-endpoint}}/auth/user HTTP/1.1
+Accept: application/json
+
+####
+GET {{authentication-endpoint}}/user HTTP/1.1
+Accept: application/json
+
+
+####
+GET {{defaultZone-endpoint}}/eureka HTTP/1.1
+Accept: application/json
+
+
+
+
+
+
+# docker exec -it common-database-1 /bin/bash
+
+# {"id":"442adb6e-fa58-47f3-9ca2-ed1fecdfe86c","name":"HR-PowerSuite","contactName":"Doug Drewry","contactEmail":"doug.drewry@hr.com","contactPhone":"920-555-1212"}
+# {"id":"63739585-812b-4dd5-88fe-973e2ab96e83","name":"customer-crm-co","contactName":"Mark Balster","contactEmail":"mark.balster@custcrmco.com","contactPhone":"823-555-1212"}
+
+
+
+####
+GET http://192.168.250.99:8761/eureka/apps/organizationservice HTTP/1.1
+Accept: application/json
+
+####
+GET http://192.168.250.99:8761/eureka/apps/configserver HTTP/1.1
+
+####
+GET http://192.168.250.99:8761/eureka/apps HTTP/1.1
+Accept: application/json
+
+#### 입력 요청
+# uuid 값은 필수 이나 의미 없음.
+
+POST http://192.168.250.99:8085/v1/organizations/uuid HTTP/1.1
+Content-Type: application/json
+
+{
+      "id":""
+    , "name":"customer-crm-co"
+    , "contactName":"Mark Balster"
+    , "contactEmail":"ㅁ@custcrmco.com"
+    , "contactPhone":"823-555-1212"
+}
+
+#### 수정 ???
+# URL에 uuid 값을 참조하지 않고
+# body의 id 값(key)를 가지고 Update or Insert 를 수행한다.
+PUT http://192.168.250.99:8085/v1/organizations/01518aac-e786-48b1-9307-e854ad309d5f HTTP/1.1
+Content-Type: application/json
+
+{
+      "id":"01518aac-e786-48b1-9307-e854ad309d7f"
+    , "name":"Lee In-Jae"
+    , "contactName":"Mark Balster"
+    , "contactEmail":"abcadafdfasdfd@custcrmco.com"
+    , "contactPhone":"823-555-1212"
+}
+
+
+####
+# licensing-service/controllers/ToolsController
+
+GET http://192.168.250.99:8080/v1/tools/eureka/services HTTP/1.1
+
+

@@ -1,0 +1,35 @@
+####
+GET http://172.31.37.149:8888/licensingservice/default HTTP/1.1
+
+####
+GET http://172.31.37.149:8888/licensingservice/dev HTTP/1.1
+
+
+####
+GET http://172.31.37.149:8888/organizationservice/default HTTP/1.1
+
+####
+GET http://172.31.37.149:8888/organizationservice/dev HTTP/1.1
+
+####
+POST http://172.31.37.149:8888/encrypt HTTP/1.1
+
+p0stgr@s
+
+
+####
+GET http://172.31.37.148:8080/v1/organizations/e254f8c-c442-4ebe-a82a-e2fc1d1ff78a/licenses/f3831f8c-c338-4ebe-a82a-e2fc1d1ff78a HTTP/1.1
+
+####
+GET http://localhost:8080/api/v1/employees HTTP/1.1
+
+####
+POST http://localhost:8080/api/v1/employees HTTP/1.1
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Cena",
+    "emailId": "injae@snudh.org"
+}
+

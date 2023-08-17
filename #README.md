@@ -24,6 +24,9 @@ token : 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
 $> lsb_release -a
 ```
 
+
+
+
 ## VS Code git 연동
 
 ## 인텔리제이 설치
@@ -31,7 +34,7 @@ $> lsb_release -a
 ```shell
 $> sudo tar xf ideaIC-2023.2.tar.gz -C /opt/
 $> /opt/idea-IC-232.8660.185/bin/idea.sh
-``````
+```
 
  하단의 톱니바뀌 버튼을 클리하고 Create Desktop Enty(바로가기 생성) 버튼을 클릭한다.
 
@@ -56,13 +59,31 @@ $> /opt/idea-IC-232.8660.185/bin/idea.sh
 
     ```shell
     wget https://download.java.net/openjdk/jdk8u43/ri/openjdk-8u43-linux-x64.tar.gz
+
+    wget https://download.oracle.com/otn/java/jdk/8u202-b08/1961070e4c9b4e26a04e7f5a083f551e/jdk-8u202-linux-x64.tar.gz
+
+    wget https://download.oracle.com/otn/java/jdk/8u202-b08/1961070e4c9b4e26a04e7f5a083f551e/jdk-8u202-linux-i586.tar.gz
+
     wget https://download.java.net/openjdk/jdk11.0.0.1/ri/openjdk-11.0.0.1_linux-x64_bin.tar.gz
     wget https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz
     wget https://download.java.net/openjdk/jdk20/ri/openjdk-20+36_linux-x64_bin.tar.gz
     ```
 
+ * [Apache Mave download](https://maven.apache.org/download.cgi)
+
+    ```shell
+    wget https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz
+    ```
+
+## [Spring Boot](https://godekdls.github.io/Spring%20Boot/spring-application/)
+
+기동정보 로깅은 spring.main.log-startup-info를 false로 설정하면 끌 수 있다.
+
 
 # 스프링 마이크로서비스 코딩 공작소
+
+ > https://github.com/gilbutITbook/006962.git  
+ > https://github.com/klimtever/spmia-chapter1.git
 
 ## spmia-chapter6
 
@@ -119,32 +140,6 @@ zuul을 사용하기 위한 Annotation
         url: http://localhost:8082
   ```
 
-## spmia-chapter7
-
-스프링 시큐리티를 적용하는 과정에서 jwt 토큰 생성 중 발생한 에러이다  
-해당 문제는 jdk 11 이상 버전에서는 관련 모듈이 기본 참조되지 않아 에러가 발생
-
- * zuulsvr/pom.xml
-
-   ```xml
-   <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-   <dependency>
-     <groupId>javax.xml.bind</groupId>
-     <artifactId>jaxb-api</artifactId>
-     <version>2.3.1</version>
-   </dependency>
-   ```
-
- * 빌드 및 실행
-
-   ```
-   $> mvc clean package docker:build
-
-   $> sudo apt purge --auto-remove redis-server
-   $> docker container rm -f $(docker container list -qa)
-
-   $> docker-compose -f docker/common/docker-compose.yml up -d
-   ```
 
 ## spmia-chapter8
 

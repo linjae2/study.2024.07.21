@@ -1,0 +1,15 @@
+
+
+####
+GET http://172.31.37.149:8080/v1/organizations/afdafd/licenses/adsfa HTTP/1.1
+
+####
+PUT http://172.31.37.149:8080/v1/organizations/afdafd/licenses/adsfa HTTP/1.1
+
+####
+POST http://172.31.37.149:8080/v1/organizations/afdafd/licenses/adsfa HTTP/1.1
+
+####
+DELETE http://172.31.37.149:8080/v1/organizations/afdafd/licenses/adsfa HTTP/1.1
+
+
