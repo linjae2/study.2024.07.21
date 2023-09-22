@@ -1,3 +1,45 @@
+
+
+우분투 개발 연습용
+==
+$> qemu-img create -f qcow2 /data/vm/machine/ubuntu22.04_2023.09.22.qcow2 250G
+$> virt-install --name ubuntu.00 --vcpus 2 --memory 4096 \
+  --os-type linux --os-variant ubuntu22.04 \
+  --disk path=/data/vm/machine/ubuntu22.04_2023.09.22.qcow2,format=qcow2,device=disk,bus=virtio \
+  --cdrom /data/vm/iso/ubuntu-22.04.3-live-server-amd64.iso \
+  --network network=bridged,model=virtio \
+  --boot hd --graphics spice,listen=0.0.0.0
+
+
+
+
+mv /data/vm/imgs/windows.10_2023.09.11.data.qcow2 /data/vm/imgs/windows.10_apps.data.qcow2
+$> virt-install --name apps --vcpus 2 --memory 4096 \
+  --os-type windows --os-variant win10 \
+  --boot hd,cdrom,fd,network,menu=on \
+  --disk path=/data/vm/imgs/windows.10_apps.qcow2,device=disk,bus=virtio \
+  --disk path=/data/vm/imgs/windows.10_apps.data.qcow2,device=disk,bus=virtio \
+  --network network=bridged,model=virtio \
+  --graphics spice,listen=0.0.0.0
+
+
+
+$> qemu-img create -f qcow2 /data/vm/imgs/windows.10_2023.09.11.qcow2 200G
+$> qemu-img create -f qcow2 /data/vm/imgs/windows.10_2023.09.11.data.qcow2 250G
+$> virt-install --name win10 --vcpus 2 --memory 4096 \
+  --os-type windows --os-variant win10 \
+  --boot hd,cdrom,fd,network,menu=on \
+  --disk path=/data/vm/imgs/windows.10_2023.09.11.qcow2,format=qcow2,device=disk,bus=virtio \
+  --disk path=/data/vm/iso/virtio-win-0.1.229.iso,device=cdrom \
+  --cdrom /data/vm/iso/SW_DVD9_Win_Pro_10_22H2.7_64BIT_Korean_Pro_Ent_EDU_N_MLF_X23-46915.ISO \
+  --network network=default,model=virtio \
+  --boot cdrom,hd \
+  --graphics spice,listen=0.0.0.0
+
+spice://172.31.37.8:5900
+
+
+
 $> virt-install --name test --vcpus 2 --memory 4096 \
   --os-type linux --os-variant ubuntu22.04 \
   --disk path=/data/vm/imgs/ubuntu22.04.test.qcow2,format=qcow2,device=disk,bus=virtio \
@@ -22,3 +64,6 @@ $> virt-install --name u.03 --vcpus 2 --memory 4096 \
   --disk path=/data/vm/imgs/ubuntu22.04.u.03.qcow2,format=qcow2,device=disk,bus=virtio \
   --network network=default,model=virtio \
   --boot hd --graphics spice,listen=0.0.0.0
+
+
+

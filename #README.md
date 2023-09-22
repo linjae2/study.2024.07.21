@@ -25,8 +25,6 @@ $> lsb_release -a
 ```
 
 
-
-
 ## VS Code git 연동
 
 ## 인텔리제이 설치
@@ -63,6 +61,9 @@ $> /opt/idea-IC-232.8660.185/bin/idea.sh
     wget https://download.oracle.com/otn/java/jdk/8u202-b08/1961070e4c9b4e26a04e7f5a083f551e/jdk-8u202-linux-x64.tar.gz
 
     wget https://download.oracle.com/otn/java/jdk/8u202-b08/1961070e4c9b4e26a04e7f5a083f551e/jdk-8u202-linux-i586.tar.gz
+
+    $> wget --http-user=injae@snudh.org --http-password=Hello.1254 --no-check-certificate "https://download.oracle.com/otn/java/jdk/8u381-b09/8c876547113c4e4aab3c868e9e0ec572/jdk-8u381-linux-i586.tar.gz"
+    $> wget --http-user=injae@snudh.org --http-password=Hello.1254 --no-check-certificate "https://download.oracle.com/otn/java/jdk/8u381-b09/8c876547113c4e4aab3c868e9e0ec572/jdk-8u381-linux-x64.tar.gz"
 
     wget https://download.java.net/openjdk/jdk11.0.0.1/ri/openjdk-11.0.0.1_linux-x64_bin.tar.gz
     wget https://download.java.net/openjdk/jdk17/ri/openjdk-17+35_linux-x64_bin.tar.gz

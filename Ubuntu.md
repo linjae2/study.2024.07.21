@@ -398,3 +398,4 @@ NE2000 PCI, NE2000 ISA, RTL 8139, PCNET을 사용할 수 있다. -net nic,model�
     
 
 
+![Alt text](image.png)

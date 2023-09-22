@@ -1,7 +1,54 @@
 
+# Authorization Code Grant Type 토큰 요청
+#http://localhost:8080/oauth/authorize?client_id=client&redirect_uri=http://localhost:9000/callback&response_type=code&scope=read_profile
+#http://localhost:8080/oauth/authorize?client_id=client&redirect_uri=http://localhost:9000/callback&response_type=token&scope=read_profile&state=test
+
+
+http://localhost:9090/oauth/authorize?response_type=code&client_id=client&redirect_uri=http%3A%2F%2Flocalhost%3A9000%2Fcallback&scope=read_profile
+####
+
+# $ curl foo:bar@localhost:8080/oauth/token -d grant_type=password -d client_id=foo -d scope=read -d username=user -d password=test
+GET http://localhost:8080/oauth/authorize?client_id=client&redirect_uri=http://localhost:9000/callback&response_type=code&scope=read_profile
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic Y2xpZW50OnBhc3N3b3Jk
+####
+
+POST http://localhost:8080/oauth/token
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic Y2xpZW50OnBhc3N3b3Jk
+
+code=xyc9a7&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%3A9000%2Fcallback&scope=read_profile
+####
+
+# Password Grant Type 토큰 요청
+POST http://localhost:8080/oauth/token
+Content-Type: application/x-www-form-urlencoded
+Authorization: Basic Y2xpZW50OnBhc3N3b3Jk
+
+username=user&password=pass&grant_type=password&scope=read_profile
+###
+
+//@endpoint=http://192.168.250.99:8901
+@authentication-endpoint=http://172.31.37.149:8901
+@defaultZone-endpoint=http://172.31.37.149:8761
+@zuulserfer-endpoint=http://172.31.37.149:5555
 
 ####
-GET http://172.31.37.149:8080/hello/Lee/injae HTTP/1.1
+# 주울서버가 관리하는 경로를 보고 싶다면
+GET {{authentication-endpoint}}/actuator/routes HTTP/1.1
+Authorization: Basic YWRtaW46YWRtaW4=
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -22,9 +69,6 @@ Accept: application/json
 ####
 GET {{defaultZone-endpoint}}/eureka HTTP/1.1
 Accept: application/json
-
-
-
 
 
 
